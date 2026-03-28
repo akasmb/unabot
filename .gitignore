@@ -1,0 +1,9 @@
+#environment
+.env
+.venv/
+#IDE
+.vscode/
+#python cache
+**/__pycache__/
+webhook_log.json
+config.json
