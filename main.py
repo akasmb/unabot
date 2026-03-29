@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request
 import aiohttp
 import discord
 from discord import app_commands
+from typing import TypedDict, List, Optional
 
 load_dotenv()
 discord_token = os.getenv('DISCORD_TOKEN')
@@ -21,6 +22,36 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 app = FastAPI()
 FASTAPI_LOG_FILE = "webhook_log.json"
+
+class EmbedAuthor(TypedDict):
+    name: str
+    url: Optional[str]
+    icon_url: Optional[str]
+class EmbedFooter(TypedDict):
+    text: str
+    icon_url: Optional[str]
+class EmbedField(TypedDict):
+    name: str
+    value: str
+    inline: bool
+class EmbedData(TypedDict):
+    color: Optional[int]
+    author: Optional[EmbedAuthor]
+    title: str          # required
+    description: str    # required
+    fields: Optional[List[EmbedField]]
+    thumbnail: Optional[str]
+    image: Optional[str]
+    video: Optional[str]
+    footer: Optional[EmbedFooter]
+    timestamp: Optional[str]
+class EmbedEntry(TypedDict):
+    guild_id: Optional[int]
+    channel_id: Optional[int]
+    message_id: Optional[int]
+    preset: ServerPreset
+    alias: str
+    embed: EmbedData
 
 async def update_player_list(data: dict):
     url = "http://172.30.1.100:8212/v1/api/players"
@@ -133,21 +164,28 @@ class ServerPreset(Enum):
         description='새 임베드를 설정합니다.',
         guild=test_guild
         )
-@app_commands.describe(channel='채널 선택')
+@app_commands.describe(
+    server='사용 중인 서버 프리셋 선택',
+    alias='식별을 위한 임베드 별칭 입력')
 #@app_commands.checks.has_permissions(administrator=True)
 async def new_embed(
     interaction: discord.Interaction,
-    server: str,
+    server: ServerPreset,
     alias: str,
     ):
     embed = discord.Embed(title="New Embed")
     myembed = await interaction.channel.send(embed=embed)
     myembed_id = myembed.id
-    json.dump({'channel_id': interaction.channel.id, 'message_id': myembed_id}, open('config.json', 'w', encoding='utf-8'))
+    json.dump(
+        {'channel_id': interaction.channel.id,
+         'message_id': myembed_id},
+         open('config.json', 'w', encoding='utf-8')
+         )
     await interaction.response.send_message(
-    f'{channel.mention} 채널에 임베드를 생성하였습니다.', ephemeral=True)
+    f'[{alias}](@{server.value}) 임베드를 생성하였습니다.',
+    ephemeral=True)
 
-#============= 접속 플레이어 확인 =============# 
+#============= 접속 플레이어 확인 =============#
 '''
 @tree.command(
         name='players',
