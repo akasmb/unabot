@@ -26,12 +26,13 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 #===== fastapi server variables for game server state webhook =====#
 app = FastAPI()
-FASTAPI_LOG_FILE = "webhook_log.json"
+FASTAPI_LOG_FILE = "test.json"
 
 #===== types of json data ======#
 class ServerPreset(Enum):
     NONE = "None"
     PAL_DOCKER = "thijsvanloef/palworld-server-docker"
+    COREKPR_DOCKER = "escapingnetwork/core-keeper-dedicated"
 class EmbedAuthor(TypedDict):
     name: str
     url: Optional[str]
@@ -170,14 +171,14 @@ async def _log_webhook(game_name: str, data: dict, show_terminal=True):
     with open(FASTAPI_LOG_FILE, "w", encoding="utf-8") as f:
         json.dump(logs, f, indent=4, ensure_ascii=False)
 
-@app.post("/webhook/pals2")
+@app.post("/webhook/{guild_id}/{test}")
 async def _debug_webhook(game_name: str, request: Request):
     # Parse JSON payload
     try:
         data = await request.json()
     except Exception:
         return {"status": "error", "message": "Invalid JSON"}
-    await _log_webhook('pals2', data, show_terminal=True)
+    await _log_webhook('test', data, show_terminal=True)
     if data:
         await _update_player_list(data)
     return {"status": "success"}
