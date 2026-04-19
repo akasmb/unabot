@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 import discord
 from discord import app_commands
+from discord.app_commands import Choice
 
 #===== environment variables =====#
 load_dotenv()
@@ -29,10 +30,6 @@ app = FastAPI()
 FASTAPI_LOG_FILE = "test.json"
 
 #===== types of json data ======#
-class ServerPreset(Enum):
-    NONE = "None"
-    PAL_DOCKER = "thijsvanloef/palworld-server-docker"
-    COREKPR_DOCKER = "escapingnetwork/core-keeper-dedicated"
 class EmbedAuthor(TypedDict):
     name: str
     url: Optional[str]
@@ -196,6 +193,12 @@ async def on_ready():
         pass
 
 #============= 메세지 전송 채널 설정 =============# 
+class ServerPreset(Enum):
+    NONE = "None"
+    PAL_DOCKER = "thijsvanloef/palworld-server-docker"
+    COREKPR_DOCKER = "escaping/core-keeper-dedicated"
+    MC_DOCKER = "itzg/minecraft-server"
+
 @tree.command(
         name='new_embed',
         description='새 임베드를 설정합니다.',
@@ -203,7 +206,15 @@ async def on_ready():
         )
 @app_commands.describe(
     server='사용 중인 서버 프리셋 선택',
-    alias='식별을 위한 임베드 별칭 입력')
+    alias='식별을 위한 임베드 별칭 입력'
+    )
+@app_commands.choices(fruits=[
+    Choice(name='none', value=ServerPreset.NONE),
+    Choice(name='[Palworld] docker dedicated server', value=ServerPreset.PAL_DOCKER),
+    Choice(name='[Core Keeper] docker dedicated server', value=ServerPreset.COREKPR_DOCKER),
+    ]
+)
+
 #@app_commands.checks.has_permissions(administrator=True)
 async def new_embed(
     interaction: discord.Interaction,
